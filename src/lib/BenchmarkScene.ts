@@ -30,7 +30,7 @@ export class BenchmarkScene {
     
     // Create default config
     this.config = {
-      instanceCount: 100,
+      instanceCount: 40,
       renderMode: RenderMode.INSTANCED,
       animation: 'idle'
     };
@@ -96,8 +96,8 @@ export class BenchmarkScene {
     const rows = Math.ceil(count / cols);
     
     // Calculate spacing
-    const spacingX = screenWidth / (cols + 1);
-    const spacingY = screenHeight / (rows + 1);
+    const spacingX = 0.1*screenWidth / (cols + 1);
+    const spacingY = 0.1*screenHeight / (rows + 1);
     
     // Create spines
     for (let i = 0; i < count; i++) {
@@ -111,8 +111,8 @@ export class BenchmarkScene {
       const col = i % cols;
       const row = Math.floor(i / cols);
       spine.position.set(
-        spacingX * (col + 1),
-        spacingY * (row + 1)
+        screenWidth*0.2 + spacingX * (col + 1),
+        screenHeight*0.2 + spacingY * (row + 1)
       );
       
       // Scale spine
@@ -134,11 +134,11 @@ export class BenchmarkScene {
     const rows = Math.ceil(count / cols);
     
     // Calculate spacing
-    const spacingX = 0.3 * screenWidth / (cols + 1);
-    const spacingY = 0.3 * screenHeight / (rows + 1);
+    const spacingX = 0.1*screenWidth / (cols + 1);
+    const spacingY = 0.1*screenHeight / (rows + 1);
     
     // Create container for instanced spines
-    const groupId = `benchmark-group-${this.config.animation}`;
+    const groupId = `benchmark-group`;
     
     // Create SpineFromOptions object to use with Spine.from
     const spineOptions: SpineFromOptions = { skeleton: 'god', atlas:'god-atlas' };
@@ -161,7 +161,7 @@ export class BenchmarkScene {
       const row = Math.floor(i / cols);
       spine.position.set(
         screenWidth*0.2 + spacingX * (col + 1),
-        screenWidth*0.2 + spacingY * (row + 1)
+        screenHeight*0.2 + spacingY * (row + 1)
       );
       
       // Scale spine
@@ -322,8 +322,9 @@ public changeAnimation(animationName: string): void {
   
   if (this.config.renderMode === RenderMode.INSTANCED && this.instancer) {
     // For instanced spines, change the group animation
-    const groupId = `benchmark-group-${this.config.animation}`;
+    const groupId = `benchmark-group`;
     this.instancer.setGroupAnimation(groupId, animationName, true);
+    
   } else {
     // For standard spines, change each animation individually
     for (const spine of this.spines) {

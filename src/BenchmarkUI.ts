@@ -12,11 +12,11 @@ export class BenchmarkUI {
   private instanceCountSlider: HTMLInputElement;
   private instanceCountValueElement: HTMLElement;
   private instanceModeSelect: HTMLSelectElement;
-  private animationTypeSelect: HTMLSelectElement;
   private toggleAnimationsButton: HTMLButtonElement;
   private resetBenchmarkButton: HTMLButtonElement;
   private updateInterval: number | null = null;
-  private alternateAnimation: string = 'run';
+  private alternateAnimation: string = 'win';
+  private currentAnimation: string = 'idle';
   
   constructor(benchmarkScene: BenchmarkScene) {
     this.benchmarkScene = benchmarkScene;
@@ -36,7 +36,6 @@ export class BenchmarkUI {
     this.instanceCountSlider = document.getElementById('instance-count') as HTMLInputElement;
     this.instanceCountValueElement = document.getElementById('instance-count-value') as HTMLElement;
     this.instanceModeSelect = document.getElementById('instance-mode') as HTMLSelectElement;
-    this.animationTypeSelect = document.getElementById('animation-type') as HTMLSelectElement;
     this.toggleAnimationsButton = document.getElementById('toggle-animations') as HTMLButtonElement;
     this.resetBenchmarkButton = document.getElementById('reset-benchmark') as HTMLButtonElement;
     
@@ -54,7 +53,6 @@ export class BenchmarkUI {
     this.instanceCountSlider.value = config.instanceCount.toString();
     this.instanceCountValueElement.textContent = config.instanceCount.toString();
     this.instanceModeSelect.value = config.renderMode;
-    this.animationTypeSelect.value = config.animation;
     
     // Check if instancing is available (based on config.renderMode)
     // If we're in standard mode and it's the default, it means instancing is not available
@@ -79,16 +77,8 @@ export class BenchmarkUI {
     // Add event listeners
     this.instanceCountSlider.addEventListener('input', this.onInstanceCountChange.bind(this));
     this.instanceModeSelect.addEventListener('change', this.onInstanceModeChange.bind(this));
-    this.animationTypeSelect.addEventListener('change', this.onAnimationTypeChange.bind(this));
     this.toggleAnimationsButton.addEventListener('click', this.onToggleAnimations.bind(this));
     this.resetBenchmarkButton.addEventListener('click', this.onResetBenchmark.bind(this));
-    
-    // Pre-calculate alternate animation
-    const currentAnimation = config.animation;
-    const animationOptions = Array.from(this.animationTypeSelect.options).map(opt => opt.value);
-    const currentIndex = animationOptions.indexOf(currentAnimation);
-    const nextIndex = (currentIndex + 1) % animationOptions.length;
-    this.alternateAnimation = animationOptions[nextIndex];
   }
   
   /**
@@ -145,38 +135,21 @@ export class BenchmarkUI {
     });
   }
   
-  private onAnimationTypeChange(): void {
-    const animation = this.animationTypeSelect.value;
-    
-    // Pre-calculate alternate animation
-    const animationOptions = Array.from(this.animationTypeSelect.options).map(opt => opt.value);
-    const currentIndex = animationOptions.indexOf(animation);
-    const nextIndex = (currentIndex + 1) % animationOptions.length;
-    this.alternateAnimation = animationOptions[nextIndex];
-    
-    // Change animation without regenerating the entire scene
-    this.benchmarkScene.changeAnimation(animation);
-  }
-  
   private onToggleAnimations(): void {
-    const currentAnimation = this.animationTypeSelect.value;
-    
+
     // Toggle between current and alternate animation
-    const newAnimation = currentAnimation === this.alternateAnimation 
-      ? this.benchmarkScene.getConfig().animation 
-      : this.alternateAnimation;
-    
-    // Update UI
-    this.animationTypeSelect.value = newAnimation;
+    this.currentAnimation = this.currentAnimation === 'win' ? 'idle' : 'win' 
+    console.log('COnfig', this.benchmarkScene.getConfig().animation)
+    console.log('New Animation', this.currentAnimation)
     
     // Update scene
-    this.benchmarkScene.changeAnimation(newAnimation);
+    this.benchmarkScene.changeAnimation(this.currentAnimation);
   }
   
   private onResetBenchmark(): void {
     // Reset to default config
     const defaultConfig: BenchmarkConfig = {
-      instanceCount: 100,
+      instanceCount: 40,
       renderMode: RenderMode.INSTANCED,
       animation: 'idle'
     };
@@ -185,8 +158,7 @@ export class BenchmarkUI {
     this.instanceCountSlider.value = defaultConfig.instanceCount.toString();
     this.instanceCountValueElement.textContent = defaultConfig.instanceCount.toString();
     this.instanceModeSelect.value = defaultConfig.renderMode;
-    this.animationTypeSelect.value = defaultConfig.animation;
-    
+
     // Update benchmark scene
     this.benchmarkScene.updateConfig(defaultConfig);
   }
@@ -259,7 +231,6 @@ export class BenchmarkUI {
     // Remove event listeners
     this.instanceCountSlider.removeEventListener('input', this.onInstanceCountChange.bind(this));
     this.instanceModeSelect.removeEventListener('change', this.onInstanceModeChange.bind(this));
-    this.animationTypeSelect.removeEventListener('change', this.onAnimationTypeChange.bind(this));
     this.toggleAnimationsButton.removeEventListener('click', this.onToggleAnimations.bind(this));
     this.resetBenchmarkButton.removeEventListener('click', this.onResetBenchmark.bind(this));
   }

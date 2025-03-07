@@ -475,14 +475,13 @@ export class SpineInstancer {
   
   // Modified setGroupAnimation method for SpineInstancePipe class
   setGroupAnimation(groupId: string, animationName: string, loop: boolean = true): void {
-    console.log('SGA',this)
     const group = this.instancePipe!.getInstanceGroups().get(groupId);
     if (!group || !group.primaryInstance) return;
     
     console.log(`Setting group animation: ${groupId} -> ${animationName} (loop: ${loop})`);
     
     // Clear any existing animations
-    group.primaryInstance.state.clearTracks();
+    // group.primaryInstance.state.clearTracks();
     
     // Set animation on primary instance
     const track = group.primaryInstance.state.setAnimation(0, animationName, loop);
