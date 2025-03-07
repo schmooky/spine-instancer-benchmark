@@ -1,5 +1,5 @@
 import { Container, Graphics, Application, Assets } from 'pixi.js';
-import { Spine } from '@esotericsoftware/spine-pixi-v8';
+import { Spine, SpineFromOptions } from '@esotericsoftware/spine-pixi-v8';
 import { InstancedSpine, SpineInstancer } from './SpineInstancer';
 
 export enum RenderMode {
@@ -141,7 +141,7 @@ export class BenchmarkScene {
     const groupId = `benchmark-group-${this.config.animation}`;
     
     // Create SpineFromOptions object to use with Spine.from
-    const spineOptions = { skeletonData: this.spineData };
+    const spineOptions: SpineFromOptions = { skeleton: 'symbol', atlas:'symbol-atlas' };
     
     const container = this.instancer!.createInstancedGroup(
       spineOptions,  // Pass options object instead of spineData directly

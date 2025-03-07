@@ -55,13 +55,10 @@ export class AssetLoader {
       await this.init();
     }
 
-    // Create bundle for this character if it doesn't exist
-    const bundleName = `spine-${character}`;
-
     try {
       console.log('Loading Skeleton')
       // Load the character assets
-      const skeleton = await Assets.load(character, (progress) => {
+      const skeleton = await Assets.load([character,`${character}-atlas`], (progress) => {
         if (progressCallback) {
           progressCallback({
             progress: progress,

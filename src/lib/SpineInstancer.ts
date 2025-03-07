@@ -375,6 +375,7 @@ export class SpineInstancer {
    * Create a new instanced spine using Spine.from
    */
   createInstancedSpine(options: SpineFromOptions): InstancedSpine {
+    console.log(`Creating Instanced Spine: ${JSON.stringify(options)}`)
     // Create a spine instance using Spine.from
     const spine = Spine.from(options) as InstancedSpine;
     
@@ -546,17 +547,20 @@ export class SpineInstancer {
  * Call this before using any instancing features
  */
 export function initSpineInstancing(renderer: Renderer): SpineInstancer | null {
-  console.log('initSpineInstancing')
-  console.log(renderer)
-  const instancer = new SpineInstancer(renderer)
-  console.log(instancer)
-  renderer.renderPipes['spineInstance']= instancer;
+  if (!renderer.renderPipes) {
+    console.warn('Renderer does not support render pipes. Spine instancing is not available.');
+    return new SpineInstancer(renderer); // Return a limited instancer
+  }
 
   try {
-    // Register the instance pipe with the renderer
-    console.log('Registering Pipeline')
-    extensions.add(SpineInstancePipe);
-    return instancer;
+    // Create the pipe manually
+    const pipe = new SpineInstancePipe(renderer);
+    
+    // Add it to the renderer's pipe collection
+    renderer.renderPipes.spineInstance = pipe;
+    
+    // Create the instancer
+    return new SpineInstancer(renderer);
   } catch (error) {
     console.error('Failed to initialize SpineInstancer:', error);
     return null;
