@@ -1,5 +1,4 @@
 import './style.css';
-import { Spine } from '@esotericsoftware/spine-pixi-v8';
 import { App } from './App';
 
 // Check WebGL support before initializing

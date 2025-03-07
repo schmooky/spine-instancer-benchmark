@@ -7,7 +7,8 @@ import {
     type Renderer,
     type RenderPipe,
 } from 'pixi.js';
-import { BatchableSpineSlot } from '@esotericsoftware/spine-pixi-v8';
+//@ts-ignore
+import { BatchableSpineSlot } from 'node_modules/@esotericsoftware/spine-pixi-v8/dist/BatchableSpineSlot.js';
 import { Spine } from '@esotericsoftware/spine-pixi-v8';
 import { MeshAttachment, RegionAttachment } from '@esotericsoftware/spine-core';
 

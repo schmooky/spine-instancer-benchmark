@@ -1,6 +1,5 @@
 import Stats from 'stats.js';
 import { BenchmarkScene, RenderMode, BenchmarkConfig } from './lib/BenchmarkScene';
-import { Application } from 'pixi.js';
 
 export class BenchmarkUI {
   private stats: Stats;
@@ -15,7 +14,6 @@ export class BenchmarkUI {
   private toggleAnimationsButton: HTMLButtonElement;
   private resetBenchmarkButton: HTMLButtonElement;
   private updateInterval: number | null = null;
-  private alternateAnimation: string = 'win';
   private currentAnimation: string = 'idle';
   
   constructor(benchmarkScene: BenchmarkScene) {
@@ -176,17 +174,6 @@ export class BenchmarkUI {
     
     // Update instance count
     this.activeInstancesElement.textContent = perfData.spineCount.toString();
-    
-    // Update FPS from Stats.js - stats doesn't have getFPS method, need to access the value differently
-    // The FPS panel is typically the first panel (index 0) in Stats.js
-    let fps = 0;
-    if (this.stats.dom) {
-      // Try to get FPS from the first panel text content
-      const fpsText = this.stats.dom.children[0]?.children[0]?.textContent;
-      if (fpsText) {
-        fps = parseInt(fpsText) || 0;
-      }
-    }
 
     // Get memory usage
     const memory = (performance as any).memory?.usedJSHeapSize || 0;
@@ -195,7 +182,7 @@ export class BenchmarkUI {
     
     // Update draw call stats if available
     if (perfData.drawCallStats) {
-      const { instanced, standard, saved, reduction } = perfData.drawCallStats;
+      const { instanced, saved, reduction } = perfData.drawCallStats;
       this.drawCallsElement.textContent = instanced.toString();
       this.drawCallReductionElement.textContent = `${Math.round(reduction)}% (${saved} saved)`;
       

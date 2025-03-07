@@ -101,6 +101,7 @@ export class App {
     errorSummary.style.padding = '10px';
     
     const errorCode = document.createElement('pre');
+    //@ts-ignore
     errorCode.textContent = `Browser: ${navigator.userAgent}\nWebGL: ${window.WebGLRenderingContext ? 'Supported' : 'Not Supported'}\nCanvas: ${document.createElement('canvas').getContext ? 'Supported' : 'Not Supported'}`;
     errorCode.style.backgroundColor = '#222';
     errorCode.style.padding = '10px';

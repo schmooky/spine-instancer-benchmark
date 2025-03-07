@@ -1,4 +1,4 @@
-import { Container, Graphics, Application, Assets } from 'pixi.js';
+import { Container, Graphics, Application } from 'pixi.js';
 import { Physics, Spine, SpineFromOptions } from '@esotericsoftware/spine-pixi-v8';
 import { InstancedSpine, SpineInstancer } from './SpineInstancer';
 

@@ -7,7 +7,7 @@ import {
   RenderPipe 
 } from 'pixi.js';
 import { Spine, SpineFromOptions } from '@esotericsoftware/spine-pixi-v8';
-import { RegionAttachment, MeshAttachment, Physics } from '@esotericsoftware/spine-core';
+import { Physics } from '@esotericsoftware/spine-core';
 import { SpinePipe } from './SpinePipe';
 
 /**
@@ -38,14 +38,18 @@ export class SpineInstancePipe implements RenderPipe<InstancedSpine> {
   private spinePipe: SpinePipe;
   private instanceGroups: Map<string, InstanceGroup> = new Map();
   private readonly _destroyRenderableBound = this.destroyRenderable.bind(this) as (renderable: Container) => void;
+  //@ts-ignore
   private _lastFrameDrawCalls: number = 0;
+  //@ts-ignore
   private _standardDrawCalls: number = 0;
 
   constructor(renderer: Renderer) {
     this.renderer = renderer;
     
     // Check if renderPipes and spine pipe are available
+    //@ts-ignore
     if (renderer.renderPipes && renderer.renderPipes.spine) {
+      //@ts-ignore
       this.spinePipe = renderer.renderPipes.spine as SpinePipe;
     } else {
       console.warn('Spine pipe not found in renderer. SpineInstancePipe may not function correctly.');
@@ -115,7 +119,9 @@ export class SpineInstancePipe implements RenderPipe<InstancedSpine> {
         // If this was the primary instance, assign a new one
         if (spine.isPrimaryInstance && group.instances.size > 0) {
           const nextPrimary = group.instances.values().next().value;
+          //@ts-ignore
           nextPrimary.isPrimaryInstance = true;
+          //@ts-ignore
           group.primaryInstance = nextPrimary;
         }
         
@@ -186,7 +192,9 @@ export class SpineInstancePipe implements RenderPipe<InstancedSpine> {
     // If this was the primary instance, assign a new one
     if (spine.isPrimaryInstance && group.instances.size > 0) {
       const nextPrimary = group.instances.values().next().value;
+      //@ts-ignore
       nextPrimary.isPrimaryInstance = true;
+      //@ts-ignore
       group.primaryInstance = nextPrimary;
     }
     
@@ -355,6 +363,7 @@ interface InstanceGroup {
  * SpineInstancer - Utility class for working with instanced spines
  */
 export class SpineInstancer {
+  //@ts-ignore
   private renderer: Renderer;
   private instancePipe: SpineInstancePipe | null = null;
   
@@ -368,6 +377,7 @@ export class SpineInstancer {
     }
     
     // Check if spineInstance pipe is registered
+    //@ts-ignore
     this.instancePipe = renderer.renderPipes.spineInstance as SpineInstancePipe;
     console.log(extensions._queue[ExtensionType.WebGLPipes])
     console.log(renderer)
@@ -390,11 +400,14 @@ export class SpineInstancer {
     spine.isPrimaryInstance = false;
     
     // Store the original render method
+    //@ts-ignore
     spine._originalRender = spine._render;
     
     // Override the render method to handle instancing
+    //@ts-ignore
     spine._render = function(renderer: Renderer): void {
       // Get the instance pipe
+      //@ts-ignore
       const instancePipe = renderer.renderPipes?.spineInstance as SpineInstancePipe;
       
       if (!instancePipe || !this.instanceGroup || this.isPrimaryInstance) {
@@ -484,7 +497,7 @@ export class SpineInstancer {
     // group.primaryInstance.state.clearTracks();
     
     // Set animation on primary instance
-    const track = group.primaryInstance.state.setAnimation(0, animationName, loop);
+    group.primaryInstance.state.setAnimation(0, animationName, loop);
     
     // Force an initial update
     group.primaryInstance.state.update(0);
@@ -502,7 +515,7 @@ export class SpineInstancer {
         instance.state.clearTracks();
         
         // Set the same animation
-        const instanceTrack = instance.state.setAnimation(0, animationName, loop);
+        instance.state.setAnimation(0, animationName, loop);
         
         // Force an initial update
         instance.state.update(0);
@@ -642,6 +655,7 @@ export function initSpineInstancing(renderer: Renderer): SpineInstancer | null {
     const pipe = new SpineInstancePipe(renderer);
     
     // Add it to the renderer's pipe collection
+    //@ts-ignore
     renderer.renderPipes.spineInstance = pipe;
     
     // Create the instancer
