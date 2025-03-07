@@ -17,9 +17,9 @@ export interface SpineAssetInfo {
  */
 export class AssetLoader {
   private static readonly SPINE_ASSETS = {
-    symbol: {
-      skeleton: "/spine/symbol.json",
-      atlas: "/spine/symbol.atlas",
+    god: {
+      skeleton: "/spine/god.json",
+      atlas: "/spine/god.atlas",
     },
     // Add more spine characters as needed
   };

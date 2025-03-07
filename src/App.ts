@@ -236,7 +236,7 @@ export class App {
     
     try {
       // Load spine assets
-      const spineData = await AssetLoader.loadSpineCharacter('symbol', (progress) => {
+      const spineData = await AssetLoader.loadSpineCharacter('god', (progress) => {
         this.updateLoadingProgress(progress.progress);
       });
 
@@ -274,12 +274,15 @@ export class App {
     }
   }
   
-  private update(delta: number): void {
+  private update(deltaMS: number): void {
     if (this.isLoading) return;
+    
+    // Calculate deltaTime in seconds (since Spine animations use seconds)
+    const deltaTime = deltaMS / 1000;
     
     // Update benchmark scene
     if (this.benchmarkScene) {
-      this.benchmarkScene.update();
+      this.benchmarkScene.update(deltaTime);
     }
     
     // Update UI

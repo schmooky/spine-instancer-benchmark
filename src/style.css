@@ -61,6 +61,7 @@ body {
 
 #controls-panel {
   align-self: flex-start;
+  margin-left: 72px;
 }
 
 #stats-panel {

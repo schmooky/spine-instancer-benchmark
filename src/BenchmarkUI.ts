@@ -1,10 +1,10 @@
 import Stats from 'stats.js';
 import { BenchmarkScene, RenderMode, BenchmarkConfig } from './lib/BenchmarkScene';
+import { Application } from 'pixi.js';
 
 export class BenchmarkUI {
   private stats: Stats;
   private benchmarkScene: BenchmarkScene;
-  private fpsElement: HTMLElement;
   private drawCallsElement: HTMLElement;
   private activeInstancesElement: HTMLElement;
   private drawCallReductionElement: HTMLElement;
@@ -27,7 +27,6 @@ export class BenchmarkUI {
     document.getElementById('stats-container')?.appendChild(this.stats.dom);
     
     // Get UI elements
-    this.fpsElement = document.getElementById('fps-value') as HTMLElement;
     this.drawCallsElement = document.getElementById('draw-calls-value') as HTMLElement;
     this.activeInstancesElement = document.getElementById('active-instances-value') as HTMLElement;
     this.drawCallReductionElement = document.getElementById('draw-call-reduction-value') as HTMLElement;
@@ -216,8 +215,7 @@ export class BenchmarkUI {
         fps = parseInt(fpsText) || 0;
       }
     }
-    this.fpsElement.textContent = fps.toString();
-    
+
     // Get memory usage
     const memory = (performance as any).memory?.usedJSHeapSize || 0;
     const memoryInMB = Math.round(memory / (1024 * 1024));

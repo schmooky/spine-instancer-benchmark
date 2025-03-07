@@ -7,7 +7,7 @@ import {
   RenderPipe 
 } from 'pixi.js';
 import { Spine, SpineFromOptions } from '@esotericsoftware/spine-pixi-v8';
-import { RegionAttachment, MeshAttachment } from '@esotericsoftware/spine-core';
+import { RegionAttachment, MeshAttachment, Physics } from '@esotericsoftware/spine-core';
 import { SpinePipe } from './SpinePipe';
 
 /**
@@ -83,6 +83,10 @@ export class SpineInstancePipe implements RenderPipe<InstancedSpine> {
     spine._validateAndTransformAttachments();
     spine.spineAttachmentsDirty = false;
     spine.spineTexturesDirty = false;
+  }
+
+  getInstanceGroups(){
+    return this.instanceGroups;
   }
 
   updateRenderable(spine: InstancedSpine) {
@@ -210,14 +214,14 @@ export class SpineInstancePipe implements RenderPipe<InstancedSpine> {
     
     // Update group state
     group.animation = track.animation?.name || null;
-    group.time = track.animationTime;
+    group.time = track.trackTime;
     
     // Sync all non-primary instances
     for (const instance of group.instances) {
       if (instance !== primary && group.animation) {
         // Match animation and time with the primary instance
         const instanceTrack = instance.state.setAnimation(0, group.animation, track.loop);
-        instanceTrack.animationTime = group.time;
+        instanceTrack.trackTime = group.time;
       }
     }
   }
@@ -261,6 +265,7 @@ export class SpineInstancePipe implements RenderPipe<InstancedSpine> {
    * Set animation for all instances in a group
    */
   setGroupAnimation(groupId: string, animationName: string, loop: boolean = true): void {
+    console.log('SGA',this)
     const group = this.instanceGroups.get(groupId);
     if (!group || !group.primaryInstance) return;
     
@@ -375,7 +380,8 @@ export class SpineInstancer {
    * Create a new instanced spine using Spine.from
    */
   createInstancedSpine(options: SpineFromOptions): InstancedSpine {
-    console.log(`Creating Instanced Spine: ${JSON.stringify(options)}`)
+    console.log(`Creating Instanced Spine with options:`, options);
+    
     // Create a spine instance using Spine.from
     const spine = Spine.from(options) as InstancedSpine;
     
@@ -402,7 +408,109 @@ export class SpineInstancer {
       this._validateAndTransformAttachments();
     };
     
+    // Important: Make sure the skeleton is set up properly
+    spine.autoUpdate = true;
+    
     return spine;
+  }
+  
+  // Modified syncGroup method for SpineInstancePipe class
+  syncGroup(groupId: string): void {
+    const group = this.instancePipe!.getInstanceGroups().get(groupId);
+    if (!group || !group.primaryInstance) return;
+    
+    const primary = group.primaryInstance;
+    
+    // Ensure the primary instance's animation state is updated
+    primary.state.update(0.016); // Update with a small delta time
+    
+    // Get the current animation track
+    const track = primary.state.tracks[0];
+    if (!track) return;
+    
+    // Update group state
+    group.animation = track.animation?.name || null;
+    group.time = track.trackTime;
+    
+    // Sync all non-primary instances
+    for (const instance of group.instances) {
+      if (instance !== primary) {
+        if (group.animation) {
+          // Match animation and time with the primary instance
+          if (instance.state.tracks[0] && 
+              instance.state.tracks[0].animation?.name === group.animation) {
+            // Just update the time if it's the same animation
+            instance.state.tracks[0].trackTime = group.time;
+          } else {
+            // Set a new animation if it's different
+            const instanceTrack = instance.state.setAnimation(0, group.animation, track.loop);
+            instanceTrack.trackTime = group.time;
+          }
+        }
+        
+        // Make sure to apply the animation
+        instance.state.apply(instance.skeleton);
+        instance.skeleton.updateWorldTransform(Physics.update);
+      }
+    }
+  }
+  
+  // Modified update method for SpineInstancer class
+  update(deltaTime: number = 0.016): void {
+    if (!this.instancePipe) return;
+    
+    const groups = this.instancePipe.getAllGroups();
+
+    for (const group of groups) {
+      if (group.primaryInstance) {
+        // Ensure the animation state of the primary instance is updated with time
+        group.primaryInstance.state.update(deltaTime);
+        group.primaryInstance.state.apply(group.primaryInstance.skeleton);
+        group.primaryInstance.skeleton.updateWorldTransform(Physics.update);
+      }
+      
+      this.instancePipe.syncGroup(group.id);
+    }
+  }
+  
+  // Modified setGroupAnimation method for SpineInstancePipe class
+  setGroupAnimation(groupId: string, animationName: string, loop: boolean = true): void {
+    console.log('SGA',this)
+    const group = this.instancePipe!.getInstanceGroups().get(groupId);
+    if (!group || !group.primaryInstance) return;
+    
+    console.log(`Setting group animation: ${groupId} -> ${animationName} (loop: ${loop})`);
+    
+    // Clear any existing animations
+    group.primaryInstance.state.clearTracks();
+    
+    // Set animation on primary instance
+    const track = group.primaryInstance.state.setAnimation(0, animationName, loop);
+    
+    // Force an initial update
+    group.primaryInstance.state.update(0);
+    group.primaryInstance.state.apply(group.primaryInstance.skeleton);
+    group.primaryInstance.skeleton.updateWorldTransform(Physics.update);
+    
+    // Update group state
+    group.animation = animationName;
+    group.time = 0;
+    
+    // Sync other instances immediately
+    for (const instance of group.instances) {
+      if (instance !== group.primaryInstance) {
+        // Clear any existing animations on this instance too
+        instance.state.clearTracks();
+        
+        // Set the same animation
+        const instanceTrack = instance.state.setAnimation(0, animationName, loop);
+        
+        // Force an initial update
+        instance.state.update(0);
+        instance.state.apply(instance.skeleton);
+        instance.skeleton.updateWorldTransform(Physics.update);
+      }
+    }
   }
   
   /**
@@ -419,14 +527,6 @@ export class SpineInstancer {
   removeFromGroup(spine: InstancedSpine): void {
     if (!this.instancePipe) return;
     this.instancePipe.unregisterInstance(spine);
-  }
-  
-  /**
-   * Set animation for all instances in a group
-   */
-  setGroupAnimation(groupId: string, animationName: string, loop: boolean = true): void {
-    if (!this.instancePipe) return;
-    this.instancePipe.setGroupAnimation(groupId, animationName, loop);
   }
   
   /**
@@ -474,20 +574,6 @@ export class SpineInstancer {
     }
     
     return container;
-  }
-  
-  /**
-   * Update all instance groups
-   * Call this in your game loop to keep animations synchronized
-   */
-  update(): void {
-    if (!this.instancePipe) return;
-    
-    const groups = this.instancePipe.getAllGroups();
-    
-    for (const group of groups) {
-      this.instancePipe.syncGroup(group.id);
-    }
   }
   
   /**

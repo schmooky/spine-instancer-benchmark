@@ -1,5 +1,5 @@
 import { Container, Graphics, Application, Assets } from 'pixi.js';
-import { Spine, SpineFromOptions } from '@esotericsoftware/spine-pixi-v8';
+import { Physics, Spine, SpineFromOptions } from '@esotericsoftware/spine-pixi-v8';
 import { InstancedSpine, SpineInstancer } from './SpineInstancer';
 
 export enum RenderMode {
@@ -102,7 +102,7 @@ export class BenchmarkScene {
     // Create spines
     for (let i = 0; i < count; i++) {
       // Use Spine.from instead of new Spine() to match new approach
-      const spine = Spine.from({ skeleton: 'symbol', atlas: 'symbol-atlas' });
+      const spine = Spine.from({ skeleton: 'god', atlas: 'god-atlas' });
       
       // Set animation
       spine.state.setAnimation(0, this.config.animation, true);
@@ -134,14 +134,14 @@ export class BenchmarkScene {
     const rows = Math.ceil(count / cols);
     
     // Calculate spacing
-    const spacingX = screenWidth / (cols + 1);
-    const spacingY = screenHeight / (rows + 1);
+    const spacingX = 0.3 * screenWidth / (cols + 1);
+    const spacingY = 0.3 * screenHeight / (rows + 1);
     
     // Create container for instanced spines
     const groupId = `benchmark-group-${this.config.animation}`;
     
     // Create SpineFromOptions object to use with Spine.from
-    const spineOptions: SpineFromOptions = { skeleton: 'symbol', atlas:'symbol-atlas' };
+    const spineOptions: SpineFromOptions = { skeleton: 'god', atlas:'god-atlas' };
     
     const container = this.instancer!.createInstancedGroup(
       spineOptions,  // Pass options object instead of spineData directly
@@ -160,8 +160,8 @@ export class BenchmarkScene {
       const col = i % cols;
       const row = Math.floor(i / cols);
       spine.position.set(
-        spacingX * (col + 1),
-        spacingY * (row + 1)
+        screenWidth*0.2 + spacingX * (col + 1),
+        screenWidth*0.2 + spacingY * (row + 1)
       );
       
       // Scale spine
@@ -187,23 +187,6 @@ export class BenchmarkScene {
     
     // Clear array
     this.spines = [];
-  }
-  
-  public changeAnimation(animationName: string): void {
-    this.config.animation = animationName;
-    
-    if (this.spines.length === 0) return;
-    
-    if (this.config.renderMode === RenderMode.INSTANCED && this.instancer) {
-      // For instanced spines, change the group animation
-      const groupId = `benchmark-group-${this.config.animation}`;
-      this.instancer.setGroupAnimation(groupId, animationName, true);
-    } else {
-      // For standard spines, change each animation individually
-      for (const spine of this.spines) {
-        spine.state.setAnimation(0, animationName, true);
-      }
-    }
   }
   
   public onResize(): void {
@@ -244,10 +227,17 @@ export class BenchmarkScene {
     }
   }
   
-  public update(): void {
+  public update(deltaTime: number = 0.016): void {
     // Update instancer if using instanced mode
     if (this.config.renderMode === RenderMode.INSTANCED && this.instancer) {
-      this.instancer.update();
+      this.instancer.update(deltaTime);
+    } else {
+      // For standard spines, we need to manually update their animation state
+      for (const spine of this.spines) {
+        spine.state.update(deltaTime);
+        spine.state.apply(spine.skeleton);
+        spine.skeleton.updateWorldTransform(Physics.update);
+      }
     }
   }
   
@@ -277,4 +267,68 @@ export class BenchmarkScene {
     
     return data;
   }
+
+  // Add this method to the BenchmarkScene class
+private getAvailableAnimations(): string[] {
+  // Try to create a test spine to get available animations
+  try {
+    const testSpine = Spine.from({ skeleton: 'god', atlas: 'god-atlas' });
+    
+    // Get all animations
+    const animations: string[] = [];
+    
+    if (testSpine.skeleton.data && testSpine.skeleton.data.animations) {
+      for (let i = 0; i < testSpine.skeleton.data.animations.length; i++) {
+        const anim = testSpine.skeleton.data.animations[i];
+        if (anim && anim.name) {
+          animations.push(anim.name);
+        }
+      }
+    }
+    
+    // Clean up
+    testSpine.destroy();
+    
+    return animations.length > 0 ? animations : ['idle', 'walk', 'run', 'jump'];
+  } catch (e) {
+    console.error('Failed to get animations:', e);
+    return ['idle', 'walk', 'run', 'jump'];
+  }
+}
+
+// Replace the changeAnimation method in BenchmarkScene
+public changeAnimation(animationName: string): void {
+  const availableAnims = this.getAvailableAnimations();
+  
+  // Check if the animation exists
+  if (!availableAnims.includes(animationName)) {
+    console.warn(`Animation "${animationName}" not found. Available animations: ${availableAnims.join(', ')}`);
+    
+    // Use the first available animation instead
+    if (availableAnims.length > 0) {
+      animationName = availableAnims[0];
+      console.log(`Using "${animationName}" instead.`);
+    } else {
+      console.error('No animations available!');
+      return;
+    }
+  }
+  
+  this.config.animation = animationName;
+  
+  if (this.spines.length === 0) return;
+  
+  console.log(`Changing animation to: ${animationName}`);
+  
+  if (this.config.renderMode === RenderMode.INSTANCED && this.instancer) {
+    // For instanced spines, change the group animation
+    const groupId = `benchmark-group-${this.config.animation}`;
+    this.instancer.setGroupAnimation(groupId, animationName, true);
+  } else {
+    // For standard spines, change each animation individually
+    for (const spine of this.spines) {
+      spine.state.setAnimation(0, animationName, true);
+    }
+  }
+}
 }
